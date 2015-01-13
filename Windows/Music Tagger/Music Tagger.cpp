@@ -64,12 +64,15 @@ int main()
 {
 	if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0)) 
 		return 1;
-	
+
+	TCHAR currentdir[200];
+	GetCurrentDirectory(200, currentdir);
 	int choice = 0;
 	while (choice != 4)
 	{
-		cout << "Welcome to Music Tagger v0.010\n" << endl;
-		cout << "Please Select an option\n1.Create a list of your library\n2.Update your library based on thie list from #1\n3.Change song file names to reflect their artist and title\n4.Exit Music Tagger" << endl;
+		SetCurrentDirectory(currentdir);
+		cout << "Welcome to Music Tagger v0.67b\n" << endl;
+		cout << "Please Select an option\n1.Create a list of your library\n2.Update your library based on thie list from #1\n3.Change song file names to reflect their artist and title\n4.Exit Music Tagger\n5.Open Readme with instructions." << endl;
 		cout << "Choice:";
 
 		cin >> choice;
@@ -79,74 +82,104 @@ int main()
 			cout << "Thank you for using Music Tagger!" << endl;
 			system("timeout 3");
 			return 0;
+		} else if (choice == 5)
+		{
+			system("start notepad \"readme.txt\"");
 		}
-		
-		CFolderPickerDialog folderselect;
-
-		if (folderselect.DoModal() == IDOK)
-			AfxMessageBox(folderselect.GetFolderPath());
-
-		CAtlString folderpathvs = folderselect.GetFolderPath().GetString();
-		folderpathvs.AppendFormat(_T("\\"));
-		SetCurrentDirectory(folderpathvs);
-
-		vector <MP3*> mp3list = getMusicList(folderpathvs);
-
-		switch (choice)
+		else
 		{
-		case 1:
-		{
-			createMyMusicList(mp3list);
-			break;
-		}
-		case 2:
-		{
-			break;
-		}
-		case 3:
-		{
-			int exit = DisplayContinueMessageBox();
-			if (exit == 7)
+			CFolderPickerDialog folderselect;
+
+			if (folderselect.DoModal() == IDOK)
+				AfxMessageBox(folderselect.GetFolderPath());
+
+			CAtlString folderpathvs = folderselect.GetFolderPath().GetString();
+			folderpathvs.AppendFormat(_T("\\"));
+			SetCurrentDirectory(folderpathvs);
+
+			vector <MP3*> mp3list = getMusicList(folderpathvs);
+
+			switch (choice)
 			{
-				break;
-			}
-			ifstream musiclist;
-			vector <MP3*>::iterator it;
-			char artist[33], title[33];
-
-			musiclist.open("MyMusicList.csv", fstream::in);
-
-			char trash[500];
-			musiclist.getline(trash, 500);
-			
-			for (it = mp3list.begin(); it != mp3list.end(); it++)
+			case 1:
 			{
-				musiclist.get(artist, 33, ',');
-				musiclist.ignore();
-				musiclist.get(title, 33, ',');
-				musiclist.getline(trash, 500);
-				string tempart(artist);
-				(*it)->setArtist(checkInput(tempart));
-				string temptit(title);
-				(*it)->setTitle(checkInput(temptit));
-				if (((*it)->getArtist().empty() != true) && ((*it)->getTitle().empty() != true))
-				{
-					string temppathold = (*it)->getPathname();
-					string temppathnew = (*it)->getArtist() + " - " + (*it)->getTitle() + ".mp3";
-					const char *oldname = temppathold.c_str();
-					const char *newname = temppathnew.c_str();
-					rename(oldname, newname);
-				}
+					  createMyMusicList(mp3list);
+					  break;
 			}
-			musiclist.close();
-			remove("MyMusicList.csv");
-			createMyMusicList(getMusicList(folderpathvs));
-			break;
-		}
-		}
-		
+			case 2:
+			{
+					  int exit = DisplayContinueMessageBox();
+					  if (exit == 7)
+					  {
+						  break;
+					  }
 
-		system("pause");
+					  ifstream musiclist;
+					  vector <MP3*>::iterator it;
+					  char artist[33], title[33], album[33];
+
+					  musiclist.open("MyMusicList.csv", fstream::in);
+
+					  char trash[500];
+					  musiclist.getline(trash, 500);
+
+					  for (it = mp3list.begin(); it != mp3list.end(); it++)
+					  {
+						  musiclist.get(artist, 33, ',');
+						  musiclist.ignore();
+						  musiclist.get(title, 33, ',');
+						  musiclist.ignore();
+						  musiclist.get(album, 33, ',');
+						  musiclist.getline(trash, 500);
+
+					  }
+					  break;
+			}
+			case 3:
+			{
+					  int exit = DisplayContinueMessageBox();
+					  if (exit == 7)
+					  {
+						  break;
+					  }
+					  ifstream musiclist;
+					  vector <MP3*>::iterator it;
+					  char artist[33], title[33];
+
+					  musiclist.open("MyMusicList.csv", fstream::in);
+
+					  char trash[500];
+					  musiclist.getline(trash, 500);
+
+					  for (it = mp3list.begin(); it != mp3list.end(); it++)
+					  {
+						  musiclist.get(artist, 33, ',');
+						  musiclist.ignore();
+						  musiclist.get(title, 33, ',');
+						  musiclist.getline(trash, 500);
+						  string tempart(artist);
+						  (*it)->setArtist(checkInput(tempart));
+						  string temptit(title);
+						  (*it)->setTitle(checkInput(temptit));
+						  if (((*it)->getArtist().empty() != true) && ((*it)->getTitle().empty() != true))
+						  {
+							  string temppathold = (*it)->getPathname();
+							  string temppathnew = (*it)->getArtist() + " - " + (*it)->getTitle() + ".mp3";
+							  const char *oldname = temppathold.c_str();
+							  const char *newname = temppathnew.c_str();
+							  rename(oldname, newname);
+						  }
+					  }
+					  musiclist.close();
+					  remove("MyMusicList.csv");
+					  createMyMusicList(getMusicList(folderpathvs));
+					  break;
+			}
+			}
+
+		}
+			system("pause");
+			cout << endl;
 	}
 	return 0;
 }
@@ -212,6 +245,7 @@ int DisplayContinueMessageBox()
 		);
 	return msgboxID;
 }
+
 void createMyMusicList(vector <MP3 *> mp3list)
 {
 	vector <MP3*>::iterator it;
