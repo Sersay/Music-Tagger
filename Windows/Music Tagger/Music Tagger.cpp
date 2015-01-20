@@ -71,7 +71,7 @@ int main()
 	while (choice != 4)
 	{
 		SetCurrentDirectory(currentdir);
-		cout << "Welcome to Music Tagger v0.67b\n" << endl;
+		cout << "Welcome to Music Tagger v1.00\n" << endl;
 		cout << "Please Select an option\n1.Create a list of your library\n2.Update your library based on thie list from #1\n3.Change song file names to reflect their artist and title\n4.Exit Music Tagger\n5.Open Readme with instructions." << endl;
 		cout << "Choice:";
 
@@ -116,22 +116,112 @@ int main()
 
 					  ifstream musiclist;
 					  vector <MP3*>::iterator it;
-					  char artist[33], title[33], album[33];
 
 					  musiclist.open("MyMusicList.csv", fstream::in);
 
-					  char trash[500];
-					  musiclist.getline(trash, 500);
+					  char trash[1000];
+					  musiclist.getline(trash, 1000);
 
 					  for (it = mp3list.begin(); it != mp3list.end(); it++)
 					  {
-						  musiclist.get(artist, 33, ',');
-						  musiclist.ignore();
-						  musiclist.get(title, 33, ',');
-						  musiclist.ignore();
-						  musiclist.get(album, 33, ',');
-						  musiclist.getline(trash, 500);
+						  char artist[33] = "", title[33] = "", album[33] = "";
+						  if (musiclist.peek() == ',')
+						  {
+							  musiclist.ignore();
+						  }
+						  else
+						  {
+							  musiclist.get(artist, 33, ',');
+							  musiclist.ignore();
+						  }
+						  if (musiclist.peek() == ',')
+						  {
+							  musiclist.ignore();
+						  }
+						  else
+						  {
+							  musiclist.get(title, 33, ',');
+							  musiclist.ignore();
+						  }
+						  if (musiclist.peek() == ',')
+						  {
+							  musiclist.ignore();
+						  }
+						  else
+						  {
+							  musiclist.get(album, 33, ',');
+							  musiclist.ignore();
+						  }
+						  musiclist.getline(trash, 1000);
+						  (*it)->setArtist(checkInput(artist));
+						  (*it)->setTitle(checkInput(title));
+						  (*it)->setAlbum(checkInput(album));
+					  }
+					  musiclist.close();
 
+					  fstream mp3filestream;
+
+					  for (it = mp3list.begin(); it != mp3list.end(); it++)
+					  {
+						  mp3filestream.open((*it)->getPathname(),fstream::in);
+						  mp3filestream.seekg(-128, ios_base::end);
+						  char tag[4];
+						  mp3filestream.get(tag, 4);
+						  mp3filestream.close();
+						  
+						  if (strcmp("TAG", tag) == 0)
+						  {
+							  cout << "here1" << endl;
+							  mp3filestream.open((*it)->getPathname(), fstream::out | fstream::in);
+							  mp3filestream.seekg(-125,ios_base::end);
+
+							  mp3filestream << (*it)->getTitle();
+							  for (unsigned int i = 0; i < (30 - (*it)->getTitle().length()); i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  mp3filestream << (*it)->getArtist();
+							  for (unsigned int i = 0; i < (30 - (*it)->getArtist().length()); i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  mp3filestream << (*it)->getAlbum();
+							  for (unsigned int i = 0; i < (30 - (*it)->getAlbum().length()); i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  for (int i = 0; i < 35; i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  mp3filestream.close();
+						  }
+						  else
+						  {
+							  cout << "here2" << endl;
+							  mp3filestream.open((*it)->getPathname(), fstream::app);
+							  mp3filestream.write("TAG", 3);
+							  mp3filestream << (*it)->getTitle();
+							  for (unsigned int i = 0; i < (30 - (*it)->getTitle().length()); i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  mp3filestream << (*it)->getArtist();
+							  for (unsigned int i = 0; i < (30 - (*it)->getArtist().length()); i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  mp3filestream << (*it)->getAlbum();
+							  for (unsigned int i = 0; i < (30 - (*it)->getAlbum().length()); i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  for (int i = 0; i < 35; i++)
+							  {
+								  mp3filestream.put(' ');
+							  }
+							  mp3filestream.close();
+						  }
 					  }
 					  break;
 			}
@@ -153,9 +243,24 @@ int main()
 
 					  for (it = mp3list.begin(); it != mp3list.end(); it++)
 					  {
-						  musiclist.get(artist, 33, ',');
-						  musiclist.ignore();
-						  musiclist.get(title, 33, ',');
+						  if (musiclist.peek() == ',')
+						  {
+							  musiclist.ignore();
+						  }
+						  else
+						  {
+							  musiclist.get(artist, 33, ',');
+							  musiclist.ignore();
+						  }
+						  if (musiclist.peek() == ',')
+						  {
+							  musiclist.ignore();
+						  }
+						  else
+						  {
+							  musiclist.get(title, 33, ',');
+							  musiclist.ignore();
+						  }
 						  musiclist.getline(trash, 500);
 						  string tempart(artist);
 						  (*it)->setArtist(checkInput(tempart));
@@ -231,6 +336,10 @@ string checkInput(string input)
 	{
 		input.erase(found,1);
 		found = input.find('"');
+	}
+	while (input.length() > 30)
+	{
+		input.erase(input.length()-1, 1);
 	}
 	return input;
 }
